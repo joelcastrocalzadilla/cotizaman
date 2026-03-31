@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Sistema de Servicios y Cotizaciones</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; background-color: #f5f7fa; color: #333; }
+    h2, h3 { color: #2a6f97; }
+    input, button, select { margin: 5px; padding: 8px; font-size: 14px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; background-color: white; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background: #2a6f97; color: white; }
+    button { border: none; border-radius: 5px; cursor: pointer; }
+    button:hover { opacity: 0.9; }
+    .btn-guardar { background-color: #198754; color: white; }
+    .btn-eliminar { background-color: #dc3545; color: white; }
+    .btn-buscar { background-color: #2a6f97; color: white; }
+    .btn-respaldo { background-color: #f59f00; color: white; }
+    .btn-pdf { background-color: #2a6f97; color: white; }
+    .btn-wsap { background-color: #25d366; color: white; }
+  </style>
+</head>
+<body>
+  <h2>Gestión de Servicios</h2>
+  <label>Buscar por código:</label>
+  <input type="text" id="buscarCodigo" placeholder="Ej: 001">
+  <button class="btn-buscar" onclick="buscarServicio()">Buscar</button>
+  <div id="resultadoBusqueda"></div>
+
+  <label>Buscar por nombre:</label>
+  <input type="text" id="buscarNombre" placeholder="Ej: Lavado de autos">
+  <button class="btn-buscar" onclick="buscarServicioPorNombre()">Buscar</button>
+  <div id="resultadoBusquedaNombre"></div>
+
+  <hr>
+  <h3>Registrar/Modificar Servicio</h3>
+  <label>Código:</label><input type="text" id="codigo"><br>
+  <label>Descripción:</label><input type="text" id="descripcion"><br>
+  <label>Precio:</label><input type="number" id="precio"><br>
+  <button class="btn-guardar" onclick="guardarServicio()">Guardar</button>
+
+  <hr>
+  <h3>Servicios Registrados</h3>
+  <table id="tablaServicios">
+    <thead>
+      <tr><th>Código</th><th>Descripción</th><th>Precio</th><th>Acciones</th></tr>
+    </thead><tbody></tbody>
+  </table>
+
+  <hr>
+  <h2>Gestión de Cotizaciones</h2>
+  <label>Cliente:</label><input type="text" id="clienteCot"><br>
+  <label>Número de WhatsApp:</label><input type="text" id="telefonoCot"><br>
+  <label>Seleccionar servicio:</label><select id="servicioCot"></select><br>
+  <label>Cantidad:</label><input type="number" id="cantidadCot" min="1" value="1"><br>
+  <button class="btn-guardar" onclick="agregarServicioCot()">Añadir Servicio</button>
+
+  <div id="resumenCotizacion"></div>
+  <button class="btn-guardar" onclick="guardarCotizacion()">Guardar Cotización</button>
+
+  <hr>
+  <label>Buscar cotización por número de WhatsApp:</label>
+  <input type="text" id="buscarTelefonoCot">
+  <button class="btn-buscar" onclick="buscarCotizacion()">Buscar</button>
+  <div id="resultadoCotizacion"></div>
+
+  <hr>
+  <h2>Respaldo General</h2>
+  <button class="btn-respaldo" onclick="exportarRespaldo()">Exportar todo a JSON</button>
+  <input type="file" id="archivoRespaldo" onchange="importarRespaldo(event)">
+
+  <!-- Librerías PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
+  <!-- Script principal -->
+  <script>
+    // --- Servicios ---
+    function obtenerServicios(){ return JSON.parse(localStorage.getItem("servicios"))||[]; }
+    function mostrarServicios(){
+      const servicios=obtenerServicios(); const tbody=document.querySelector("#tablaServicios tbody"); tbody.innerHTML="";
+      servicios.forEach((s,i)=>{ const fila=document.createElement("tr");
+        fila.innerHTML=`<td>${s.codigo}</td><td>${s.descripcion}</td><td>$${s.precio}</td>
+        <td><button class="btn-buscar" onclick="editarServicio(${i})">Editar</button>
+        <button class="btn-eliminar" onclick="eliminarServicio(${i})">Eliminar</button></td>`; tbody.appendChild(fila); });
+      cargarServiciosCot();
+    }
+    function guardarServicio(){
+      let servicios=obtenerServicios(); const codigo=document.getElementById("codigo").value.trim();
+      const descripcion=document.getElementById("descripcion").value.trim(); const precio=parseFloat(document.getElementById("precio").value);
+      if(!codigo||!descripcion||isNaN(precio)){alert("Completa todos los campos.");return;}
+      const index=servicios.findIndex(s=>s.codigo===codigo);
+      if(index>=0){servicios[index]={codigo,descripcion,precio};}else{servicios.push({codigo,descripcion,precio});}
+      localStorage.setItem("servicios",JSON.stringify(servicios)); mostrarServicios(); limpiarFormulario();
+    }
+    function editarServicio(i){const s=obtenerServicios()[i]; document.getElementById("codigo").value=s.codigo;
+      document.getElementById("descripcion").value=s.descripcion; document.getElementById("precio").value=s.precio;}
+    function eliminarServicio(i){let servicios=obtenerServicios(); servicios.splice(i,1);
+      localStorage.setItem("servicios",JSON.stringify(servicios)); mostrarServicios();}
+    function limpiarFormulario(){document.getElementById("codigo").value="";document.getElementById("descripcion").value="";document.getElementById("precio").value="";}
+    function buscarServicio(){const codigo=document.getElementById("buscarCodigo").value.trim(); const s=obtenerServicios().find(x=>x.codigo===codigo);
+      document.getElementById("resultadoBusqueda").innerHTML=s?`<p><strong>Servicio:</strong><br>Código:${s.codigo}<br>${s.descripcion}<br>Precio:$${s.precio}</p>`:"<p>No encontrado.</p>";}
+    function buscarServicioPorNombre(){
+      const nombre=document.getElementById("buscarNombre").value.trim().toLowerCase();
+      const servicios=obtenerServicios(); const encontrados=servicios.filter(s=>s.descripcion.toLowerCase().includes(nombre));
+      let resultado=""; if(encontrados.length>0){resultado="<h3>Servicios encontrados:</h3><ul>";
+        encontrados.forEach(s=>{resultado+=`<li>${s.codigo} - ${s.descripcion} ($${s.precio})</li>`;}); resultado+="</ul>";}
+      else{resultado="<p>No se encontró servicio con ese nombre.</p>";}
+      document.getElementById("resultadoBusquedaNombre").innerHTML=resultado;
+    }
+
+    // --- Cotizaciones ---
+    let cotizacionActual=[];
+    function cargarServiciosCot(){const servicios=obtenerServicios(); const select=document.getElementById("servicioCot"); select.innerHTML="";
+      servicios.forEach(s=>{const option=document.createElement("option"); option.value=s.codigo; option.text=`${s.descripcion} ($${s.precio})`; select.add(option);});}
+    function agregarServicioCot(){const codigo=document.getElementById("servicioCot").value; const cantidad=parseInt(document.getElementById("cantidadCot").value);
+      const servicio=obtenerServicios().find(s=>s.codigo===codigo); if(servicio&&cantidad>0){cotizacionActual.push({...servicio,cantidad}); mostrarResumenCot();}}
+      function mostrarResumenCot(){
+      let total=0; 
+      let html="<ul>"; 
+      cotizacionActual.forEach(item=>{
+        const sub=item.precio*item.cantidad; 
+        total+=sub;
+        html+=`<li>${item.descripcion} x ${item.cantidad} = $${sub}</li>`;
+      });
+      html+=`</ul><strong>Total:$${total}</strong>`; 
+      document.getElementById("resumenCotizacion").innerHTML=html;
+    }
+
+    function guardarCotizacion(){
+      const cliente=document.getElementById("clienteCot").value;
+      const telefono=document.getElementById("telefonoCot").value;
+      const datos={cliente,telefono,cotizacion:cotizacionActual};
+
+      let historial=JSON.parse(localStorage.getItem("cotizaciones"))||[];
+      historial.push(datos);
+      localStorage.setItem("cotizaciones",JSON.stringify(historial));
+
+      alert("Cotización guardada.");
+      cotizacionActual=[];
+      mostrarResumenCot();
+    }
+
+    function buscarCotizacion(){
+      const tel=document.getElementById("buscarTelefonoCot").value;
+      let historial=JSON.parse(localStorage.getItem("cotizaciones"))||[];
+      let encontrados=historial.filter(c=>c.telefono===tel);
+      let resultado="";
+      if(encontrados.length>0){
+        resultado=`<h3>Cotizaciones para ${tel}</h3>`;
+        encontrados.forEach((cot,i)=>{
+          let total=0; let detalle="<ul>";
+          cot.cotizacion.forEach(item=>{
+            const sub=item.precio*item.cantidad; total+=sub;
+            detalle+=`<li>${item.descripcion} x ${item.cantidad} = $${sub}</li>`;
+          });
+          detalle+=`</ul><strong>Total:$${total}</strong>`;
+          resultado+=`
+            <div style="border:1px solid #ccc; padding:10px; margin:10px 0;">
+              <p><strong>Cotización ${i+1}</strong><br>Cliente:${cot.cliente}<br>${detalle}</p>
+              <button class="btn-buscar" onclick="editarCotizacion(${i}, '${tel}')">Editar</button>
+              <button class="btn-eliminar" onclick="eliminarCotizacion(${i}, '${tel}')">Eliminar</button>
+              <button class="btn-pdf" onclick="generarPDFPorIndice(${i}, '${tel}')">PDF</button>
+              <button class="btn-wsap" onclick="enviarPorWhatsAppPorIndice(${i}, '${tel}')">WhatsApp</button>
+            </div>`;
+        });
+      } else {
+        resultado="<p>No se encontró cotización para ese número.</p>";
+      }
+      document.getElementById("resultadoCotizacion").innerHTML=resultado;
+    }
+
+    function editarCotizacion(index,tel){
+      let historial=JSON.parse(localStorage.getItem("cotizaciones"))||[];
+      let cotizacionesCliente=historial.filter(c=>c.telefono===tel);
+      if(cotizacionesCliente[index]){
+        const cot=cotizacionesCliente[index];
+        document.getElementById("clienteCot").value=cot.cliente;
+        document.getElementById("telefonoCot").value=cot.telefono;
+        cotizacionActual=cot.cotizacion;
+        mostrarResumenCot();
+        alert("Cotización cargada en el formulario para edición. Guarda nuevamente para actualizar.");
+      }
+    }
+
+    function eliminarCotizacion(index,tel){
+      let historial=JSON.parse(localStorage.getItem("cotizaciones"))||[];
+      let otros=historial.filter(c=>c.telefono!==tel);
+      let cotizacionesCliente=historial.filter(c=>c.telefono===tel);
+      cotizacionesCliente.splice(index,1);
+      let nuevoHistorial=otros.concat(cotizacionesCliente);
+      localStorage.setItem("cotizaciones",JSON.stringify(nuevoHistorial));
+      alert("Cotización eliminada.");
+      buscarCotizacion();
+    }
+
+    // --- PDF elegante ---
+ function generarPDF(cotizacion){
+  const doc = new window.jspdf.jsPDF();
+
+  // Logo desde Blogger (tu URL pública)
+  const img = new Image();
+  img.src = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhfT4NnTcTX0Y3Cp6UuNG5tDvVQR3Dt7a7AyN99j81kr0zeSEdbQOh5yp6A58Y7d2NFE3YzTTi9mFS4nSAEwI1dCY0kmVYQgm7ED_Tn3S-z8dTno9Lt2K6jOmd79zrh6wz6KIsjhD3ixoTNr6NVQ2sRSS293rxNLJgzHAbiSgRZKxvbifA5Se6yb0WRNnY/s1600/planta.jpg";
+
+  img.onload = function(){
+    // Logo
+    doc.addImage(img, 'JPEG', 10, 10, 60, 30);
+
+    // Encabezado
+    doc.setFontSize(16);
+    doc.text("PLANTAS ELÉCTRICAS GLOBAL SERVICE GEN S.A.S", 80, 20);
+    doc.setFontSize(12);
+    doc.text("NIT: 900790437-8", 80, 30);
+    doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 150, 30);
+
+    // Datos cliente
+    doc.text(`Cliente: ${cotizacion.cliente}`, 20, 60);
+    doc.text(`Teléfono: ${cotizacion.telefono}`, 20, 70);
+
+    // Tabla de ítems
+    let total=0;
+    const filas=cotizacion.cotizacion.map((item,i)=>{
+      const sub=item.precio*item.cantidad; total+=sub;
+      return [i+1, item.descripcion, item.cantidad, `$${item.precio}`, `$${sub}`];
+    });
+
+    doc.autoTable({
+      head:[['ITEM','DESCRIPCIÓN','CANTIDAD','V.UNITARIO','V.TOTAL']],
+      body:filas,
+      startY:80,
+      headStyles:{fillColor:[42,111,151],textColor:255},
+      alternateRowStyles:{fillColor:[245,247,250]}
+    });
+
+    // Totales
+    let iva = total*0.19;
+    let final = total+iva;
+    doc.setFontSize(12);
+    doc.text(`Valor: $${total}`, 20, doc.lastAutoTable.finalY+20);
+    doc.text(`IVA 19%: $${iva}`, 20, doc.lastAutoTable.finalY+30);
+    doc.text(`TOTAL: $${final}`, 20, doc.lastAutoTable.finalY+40);
+
+    // Condiciones
+    doc.setFontSize(10);
+    doc.text("GARANTÍA 15 MESES, no cubre traslado ni servicio técnico.", 20, doc.lastAutoTable.finalY+60);
+    doc.text("FORMA DE PAGO: 100% contra entrega.", 20, doc.lastAutoTable.finalY+70);
+    doc.text("BANCO DAVIVIENDA CUENTA DE AHORROS # 451800110855", 20, doc.lastAutoTable.finalY+80);
+
+    // Firma
+    doc.setFontSize(11);
+    doc.text("Cordialmente,", 20, doc.lastAutoTable.finalY+100);
+    doc.text("Juan Carlos Lopez", 20, doc.lastAutoTable.finalY+110);
+    doc.text("Director Operativo - Servicio Técnico", 20, doc.lastAutoTable.finalY+120);
+
+    // Guardar PDF
+    doc.save(`cotizacion_${cotizacion.telefono}.pdf`);
+  };
+}
+
+    // --- WhatsApp ---
+    function enviarPorWhatsApp(cotizacion){
+      let mensaje=`Cotización para ${cotizacion.cliente}\n`;
+      cotizacion.cotizacion.forEach(item=>{
+        mensaje+=`${item.descripcion} x ${item.cantidad} = $${item.precio*item.cantidad}\n`;
+      });
+      let total=cotizacion.cotizacion.reduce((acc,item)=>acc+item.precio*item.cantidad,0);
+      mensaje+=`Total:$${total}`;
+
+      let telefono = cotizacion.telefono.trim();
+      if(!telefono.startsWith("57")) telefono = "57" + telefono;
+
+      let url=`https://wa.me/${telefono}?text=${encodeURIComponent(mensaje)}`;
+      window.open(url,"_blank");
+    }
+
+    // --- Funciones auxiliares para índices ---
+    function generarPDFPorIndice(index,tel){
+      let historial=JSON.parse(localStorage.getItem("cotizaciones"))||[];
+      let cotizacionesCliente=historial.filter(c=>c.telefono===tel);
+      if(cotizacionesCliente[index]) generarPDF(cotizacionesCliente[index]);
+    }
+
+    function enviarPorWhatsAppPorIndice(index,tel){
+      let historial=JSON.parse(localStorage.getItem("cotizaciones"))||[];
+      let cotizacionesCliente=historial.filter(c=>c.telefono===tel);
+      if(cotizacionesCliente[index]) enviarPorWhatsApp(cotizacionesCliente[index]);
+    }
+
+    // --- Respaldo ---
+    function exportarRespaldo(){
+      const datos={servicios:obtenerServicios(),cotizaciones:JSON.parse(localStorage.getItem("cotizaciones"))||[]};
+      const blob=new Blob([JSON.stringify(datos)],{type:"application/json"});
+      const url=URL.createObjectURL(blob); const a=document.createElement("a");
+      a.href=url; a.download="respaldo_general.json"; a.click();
+    }
+
+    function importarRespaldo(event){
+      const file=event.target.files[0]; if(!file)return;
+      const reader=new FileReader();
+      reader.onload=function(e){
+        const datos=JSON.parse(e.target.result);
+        if(datos.servicios)localStorage.setItem("servicios",JSON.stringify(datos.servicios));
+        if(datos.cotizaciones)localStorage.setItem("cotizaciones",JSON.stringify(datos.cotizaciones));
+        mostrarServicios(); alert("Respaldo cargado correctamente.");
+      };
+      reader.readAsText(file);
+    }
+
+    // Inicializar
+    mostrarServicios();
+  </script>
+</body>
+</html>
