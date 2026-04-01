@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Prueba PDF</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+</head>
+<body>
+  <button onclick="generarPDF()">Generar PDF</button>
+
+  <script>
+    function generarPDF(){
+      const doc = new window.jspdf.jsPDF();
+
+      // Logo en Base64 (ejemplo: un PNG muy pequeño)
+      const imgBase64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA..."; // 👈 aquí va tu cadena completa
+
+      doc.addImage(imgBase64, 'PNG', 10, 10, 50, 20);
+      doc.text("Prueba de PDF con logo", 20, 50);
+
+      doc.autoTable({
+        head:[['ITEM','DESCRIPCIÓN','CANTIDAD']],
+        body:[[1,'Servicio de prueba',2]],
+        startY:70
+      });
+
+      doc.save("prueba.pdf");
+    }
+  </script>
+</body>
+</html>
