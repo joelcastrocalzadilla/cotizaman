@@ -79,7 +79,7 @@
 
   <!-- Script principal -->
   <script>
-    // --- Servicios ---
+    // --- Servicios prestados al cliente---
     function obtenerServicios(){ return JSON.parse(localStorage.getItem("servicios"))||[]; }
     function mostrarServicios(){
       const servicios=obtenerServicios(); const tbody=document.querySelector("#tablaServicios tbody"); tbody.innerHTML="";
