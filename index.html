@@ -233,13 +233,17 @@ doc.text("Pág. 1 de 3", 120, 45);
 // Fecha debajo del encabezado
 doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 20, 65);
 
-  // Datos cliente
-  doc.text(`Cliente: ${cotizacion.cliente}`, 20, 115);
-  if(cotizacion.contacto) doc.text(`Contacto: ${cotizacion.contacto}`, 20, 125);
-  doc.text(`Correo: ${cotizacion.correo}`, 20, 135);
-  doc.text(`Teléfono: ${cotizacion.telefono}`, 20, 145);
-  doc.text(`Dirección: ${cotizacion.direccion}`, 20, 155);
-  if(cotizacion.ciudad) doc.text(`Ciudad: ${cotizacion.ciudad}`, 20, 165);
+ // Datos del cliente en formato tabla
+doc.autoTable({
+  body: [
+    [`Cliente: ${cotizacion.cliente}`, `Teléfono: ${cotizacion.telefono}`],
+    [`Contacto: ${cotizacion.contacto || ""}`, `Dirección: ${cotizacion.direccion || ""}`],
+    [`Correo: ${cotizacion.correo || ""}`, `Ciudad: ${cotizacion.ciudad || ""}`]
+  ],
+  startY: 70,   // justo debajo del encabezado
+  theme: 'plain',
+  styles: { fontSize: 11 }
+});
 
   // Tabla de ítems
   let total=0;
