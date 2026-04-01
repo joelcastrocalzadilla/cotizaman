@@ -292,41 +292,53 @@
     }
 
     // --- Funciones auxiliares para índices ---
-    // --- Funciones auxiliares para índices ---
-    function generarPDFPorIndice(index,tel){
-      let historial=JSON.parse(localStorage.getItem("cotizaciones"))||[];
-      let cotizacionesCliente=historial.filter(c=>c.telefono===tel);
-      if(cotizacionesCliente[index]) generarPDF(cotizacionesCliente[index]);
-    }
+// --- Funciones auxiliares para índices ---
+function generarPDFPorIndice(index,tel){
+  let historial=JSON.parse(localStorage.getItem("cotizaciones"))||[];
+  let cotizacionesCliente=historial.filter(c=>c.telefono===tel);
+  if(cotizacionesCliente[index]) {
+    generarPDF(cotizacionesCliente[index]);
+  } else {
+    alert("No se encontró la cotización para generar PDF.");
+  }
+}
 
-    function enviarPorWhatsAppPorIndice(index,tel){
-      let historial=JSON.parse(localStorage.getItem("cotizaciones"))||[];
-      let cotizacionesCliente=historial.filter(c=>c.telefono===tel);
-      if(cotizacionesCliente[index]) enviarPorWhatsApp(cotizacionesCliente[index]);
-    }
+function enviarPorWhatsAppPorIndice(index,tel){
+  let historial=JSON.parse(localStorage.getItem("cotizaciones"))||[];
+  let cotizacionesCliente=historial.filter(c=>c.telefono===tel);
+  if(cotizacionesCliente[index]) {
+    enviarPorWhatsApp(cotizacionesCliente[index]);
+  } else {
+    alert("No se encontró la cotización para enviar por WhatsApp.");
+  }
+}
 
-    // --- Respaldo ---
-    function exportarRespaldo(){
-      const datos={servicios:obtenerServicios(),cotizaciones:JSON.parse(localStorage.getItem("cotizaciones"))||[]};
-      const blob=new Blob([JSON.stringify(datos)],{type:"application/json"});
-      const url=URL.createObjectURL(blob); const a=document.createElement("a");
-      a.href=url; a.download="respaldo_general.json"; a.click();
-    }
+// --- Respaldo ---
+function exportarRespaldo(){
+  const datos={servicios:obtenerServicios(),cotizaciones:JSON.parse(localStorage.getItem("cotizaciones"))||[]};
+  const blob=new Blob([JSON.stringify(datos)],{type:"application/json"});
+  const url=URL.createObjectURL(blob); 
+  const a=document.createElement("a");
+  a.href=url; 
+  a.download="respaldo_general.json"; 
+  a.click();
+}
 
-    function importarRespaldo(event){
-      const file=event.target.files[0]; if(!file)return;
-      const reader=new FileReader();
-      reader.onload=function(e){
-        const datos=JSON.parse(e.target.result);
-        if(datos.servicios)localStorage.setItem("servicios",JSON.stringify(datos.servicios));
-        if(datos.cotizaciones)localStorage.setItem("cotizaciones",JSON.stringify(datos.cotizaciones));
-        mostrarServicios(); alert("Respaldo cargado correctamente.");
-      };
-      reader.readAsText(file);
-    }
+function importarRespaldo(event){
+  const file=event.target.files[0]; if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    const datos=JSON.parse(e.target.result);
+    if(datos.servicios)localStorage.setItem("servicios",JSON.stringify(datos.servicios));
+    if(datos.cotizaciones)localStorage.setItem("cotizaciones",JSON.stringify(datos.cotizaciones));
+    mostrarServicios(); 
+    alert("Respaldo cargado correctamente.");
+  };
+  reader.readAsText(file);
+}
 
-    // Inicializar
-    mostrarServicios();
+// Inicializar
+mostrarServicios();
   </script>
 </body>
 </html>
