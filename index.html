@@ -81,6 +81,8 @@
   <script>
     // --- Servicios prestados al cliente---
     function obtenerServicios(){ return JSON.parse(localStorage.getItem("servicios"))||[]; }
+
+// luego recorres servicios y construyes la tabla
     function mostrarServicios(){
       const servicios=obtenerServicios(); const tbody=document.querySelector("#tablaServicios tbody"); tbody.innerHTML="";
       servicios.forEach((s,i)=>{ const fila=document.createElement("tr");
