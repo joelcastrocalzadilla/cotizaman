@@ -220,16 +220,18 @@ function generarPDF(cotizacion){
   `;
 
   // Insertar logo ocupando todo el ancho superior
-  doc.addImage(imgBase64, 'PNG', 0, 0, pageWidth, 70);
+// Logo pequeño a la izquierda
+doc.addImage(imgBase64, 'PNG', 10, 10, 80, 40);
 
-  // Título centrado
-  doc.setFontSize(18);
-  doc.text("COTIZACIÓN", pageWidth/2, 85, {align:"center"});
+// Bloque de cotización a la derecha del logo
+doc.setFontSize(16);
+doc.text("COTIZACIÓN", 120, 25);
+doc.setFontSize(12);
+doc.text("NIT: 900790437-8", 120, 35);
+doc.text("Pág. 1 de 3", 120, 45);
 
-  // Encabezado con NIT y fecha
-  doc.setFontSize(12);
-  doc.text("NIT: 900790437-8", 20, 95);
-  doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 150, 95);
+// Fecha debajo del encabezado
+doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 20, 65);
 
   // Datos cliente
   doc.text(`Cliente: ${cotizacion.cliente}`, 20, 115);
