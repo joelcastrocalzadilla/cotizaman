@@ -233,7 +233,7 @@ doc.text("Pág. 1 de 3", 120, 45);
 // Fecha debajo del encabezado
 doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 20, 65);
 
- // Datos del cliente en formato tabla
+// Datos del cliente en formato tabla
 doc.autoTable({
   body: [
     [`Cliente: ${cotizacion.cliente}`, `Teléfono: ${cotizacion.telefono}`],
@@ -245,19 +245,29 @@ doc.autoTable({
   styles: { fontSize: 11 }
 });
 
-  // Tabla de ítems
-  let total=0;
-  const filas=cotizacion.cotizacion.map((item,i)=>{
-    const sub=item.precio*item.cantidad; total+=sub;
-    return [i+1, item.descripcion, item.cantidad, `$${item.precio}`, `$${sub}`];
-  });
+// Texto introductorio
+doc.setFontSize(12);
+doc.text("Respetados señores", 20, doc.lastAutoTable.finalY+20);
+doc.text("Nos complace presentar a su consideración nuestra propuesta económica de:", 20, doc.lastAutoTable.finalY+30);
 
-  doc.autoTable({
-    head:[['ITEM','DESCRIPCIÓN','CANTIDAD','V.UNITARIO','V.TOTAL']],
-    body:filas,
-    startY:180,
-    headStyles:{fillColor:[42,111,151],textColor:255},
-    alternateRowStyles:{fillColor:[245,247,250]}
+// Título del producto
+doc.setFontSize(14);
+doc.text("BATERIA PLANTA ELÉCTRICA", 20, doc.lastAutoTable.finalY+50);
+
+// Tabla de ítems
+let total=0;
+const filas=cotizacion.cotizacion.map((item,i)=>{
+  const sub=item.precio*item.cantidad; total+=sub;
+  return [i+1, item.descripcion, item.cantidad, `$${item.precio}`, `$${sub}`];
+});
+
+doc.autoTable({
+  head:[['ITEM','DESCRIPCIÓN','CANTIDAD','V.UNITARIO','V.TOTAL']],
+  body:filas,
+  startY: doc.lastAutoTable.finalY+70,
+  headStyles:{fillColor:[42,111,151],textColor:255},
+  alternateRowStyles:{fillColor:[245,247,250]}
+});
   });
 
   // Totales
